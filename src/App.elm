@@ -3,7 +3,9 @@ module App exposing (Model, Msg, init, subscriptions, update, view)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Ports exposing (ImagePortData, fileSelected, fileContentRead)
 import WebSocket as WS
+import Json.Decode as JD
 
 
 -- MODEL
@@ -14,15 +16,21 @@ type alias Model =
 
 
 type alias Wine =
-    { id : Int
+    { appellation : String
+    , comments : String
+    , dateTasted : String
     , name : String
+    , image : Maybe Image
     , price : Float
     , variety : String
-    , appellation : String
     , winery : String
-    , photoUrl : String
-    , comments : List String
-    , dateTasted : String
+    , id : Int
+    }
+
+
+type alias Image =
+    { contents : String
+    , filename : String
     }
 
 
@@ -39,8 +47,8 @@ wineExample =
     , variety = "Pinot Noir"
     , appellation = "Bordeaux"
     , winery = "James' Winery"
-    , photoUrl = "http://pngimg.com/uploads/wine/wine_PNG9479.png"
-    , comments = [ "Great!" ]
+    , image = Nothing
+    , comments = "Great!"
     , dateTasted = "1/1/2001"
     }
 
@@ -53,8 +61,8 @@ blankWine =
     , variety = ""
     , appellation = ""
     , winery = ""
-    , photoUrl = ""
-    , comments = [ "" ]
+    , image = Nothing
+    , comments = ""
     , dateTasted = ""
     }
 
@@ -65,7 +73,7 @@ blankWine =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    WS.listen "ws://localhost:8000" WSMessageReceived
+    fileContentRead ImageRead
 
 
 
@@ -73,23 +81,104 @@ subscriptions model =
 
 
 type Msg
-    = WSMessageReceived String
-    | WineAdded
+    = WineAdded
+    | WineNameEdited Wine String
+    | WinePriceEdited Wine String
+    | WineAppellationEdited Wine String
+    | WineVarietyEdited Wine String
+    | WineWineryEdited Wine String
+    | WineCommentsEdited Wine String
+    | WineDateEdited Wine String
+    | ImageSelected Wine
+    | ImageRead ImagePortData
+
+
+replaceIfUpdated : { a | id : b } -> { a | id : b } -> { a | id : b }
+replaceIfUpdated updated a =
+    if a.id == updated.id then
+        updated
+    else
+        a
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        WSMessageReceived message ->
-            handleWSMessage model message
+        ImageSelected wine ->
+            ( model, fileSelected (toString wine.id) )
+
+        ImageRead data ->
+            let
+                newImage =
+                    Just
+                        { contents = data.contents
+                        , filename = data.filename
+                        }
+            in
+                { model
+                    | wines =
+                        List.map
+                            (\w ->
+                                if w.id == data.wineId then
+                                    { w | image = newImage }
+                                else
+                                    w
+                            )
+                            model.wines
+                }
+                    ! []
 
         WineAdded ->
             { model | wines = model.wines ++ [ createWineWithNewId model ] } ! []
 
+        WineNameEdited wine newName ->
+            let
+                updatedWine =
+                    { wine | name = newName }
+            in
+                { model | wines = List.map (replaceIfUpdated updatedWine) model.wines } ! []
 
-handleWSMessage : Model -> String -> ( Model, Cmd Msg )
-handleWSMessage model message =
-    model ! []
+        WinePriceEdited wine newPrice ->
+            let
+                updatedWine =
+                    { wine | price = Result.withDefault 0.0 (String.toFloat newPrice) }
+            in
+                { model | wines = List.map (replaceIfUpdated updatedWine) model.wines } ! []
+
+        WineAppellationEdited wine newAppellation ->
+            let
+                updatedWine =
+                    { wine | appellation = newAppellation }
+            in
+                { model | wines = List.map (replaceIfUpdated updatedWine) model.wines } ! []
+
+        WineVarietyEdited wine newVariety ->
+            let
+                updatedWine =
+                    { wine | variety = newVariety }
+            in
+                { model | wines = List.map (replaceIfUpdated updatedWine) model.wines } ! []
+
+        WineWineryEdited wine newWinery ->
+            let
+                updatedWine =
+                    { wine | winery = newWinery }
+            in
+                { model | wines = List.map (replaceIfUpdated updatedWine) model.wines } ! []
+
+        WineCommentsEdited wine newComments ->
+            let
+                updatedWine =
+                    { wine | comments = newComments }
+            in
+                { model | wines = List.map (replaceIfUpdated updatedWine) model.wines } ! []
+
+        WineDateEdited wine newDate ->
+            let
+                updatedWine =
+                    { wine | dateTasted = newDate }
+            in
+                { model | wines = List.map (replaceIfUpdated updatedWine) model.wines } ! []
 
 
 createWineWithNewId : Model -> Wine
@@ -121,21 +210,104 @@ viewPageTitle =
 
 viewWines : Model -> Html Msg
 viewWines model =
-    div [] (List.map viewWine model.wines)
+    div [] (List.map viewWine model.wines ++ [ button [ class "button is-small", onClick (WineAdded) ] [ text "add wine" ] ])
 
 
 viewWine : Wine -> Html Msg
 viewWine wine =
-    ul [ class "wine" ]
-        [ li [] [ text wine.name ]
-        , li [] [ img [ src wine.photoUrl ] [] ]
-        , li [] [ text (toString wine.price) ]
-        , li [] [ text wine.variety ]
-        , li [] [ text wine.appellation ]
-        , li [] [ text wine.winery ]
-        , li [] [ text (String.join " " wine.comments) ]
-        , li [] [ text wine.dateTasted ]
-        , button [ class "button is-small", onClick (WineAdded) ] [ text "add wine" ]
+    div [ class "box" ]
+        [ ul [ class "wine" ]
+            [ li []
+                [ label []
+                    [ text "name: "
+                    , input
+                        [ class "input"
+                        , onInput (WineNameEdited wine)
+                        , value wine.name
+                        ]
+                        []
+                    ]
+                ]
+            , li []
+                [ figure [ class "image is-128x128" ]
+                    [ div [ class "imageWrapper" ]
+                        [ input
+                            [ type_ "file"
+                            , Html.Attributes.id <| toString wine.id
+                            , on "change" (JD.succeed <| ImageSelected wine)
+                            ]
+                            []
+                        , viewImagePreview wine.image
+                        ]
+                    ]
+                ]
+            , li []
+                [ label []
+                    [ text "wine: "
+                    , input
+                        [ class "input"
+                        , onInput (WinePriceEdited wine)
+                        , value (toString wine.price)
+                        ]
+                        []
+                    ]
+                ]
+            , li []
+                [ label []
+                    [ text "variety: "
+                    , input
+                        [ class "input"
+                        , onInput (WineVarietyEdited wine)
+                        , value wine.variety
+                        ]
+                        []
+                    ]
+                ]
+            , li []
+                [ label []
+                    [ text "appellation: "
+                    , input
+                        [ class "input"
+                        , onInput (WineAppellationEdited wine)
+                        , value wine.appellation
+                        ]
+                        []
+                    ]
+                ]
+            , li []
+                [ label []
+                    [ text "winery: "
+                    , input
+                        [ class "input"
+                        , onInput (WineWineryEdited wine)
+                        , value wine.winery
+                        ]
+                        []
+                    ]
+                ]
+            , li []
+                [ label []
+                    [ text "comments: "
+                    , input
+                        [ class "input"
+                        , onInput (WineCommentsEdited wine)
+                        , value wine.comments
+                        ]
+                        []
+                    ]
+                ]
+            , li []
+                [ label []
+                    [ text "date: "
+                    , input
+                        [ class "input"
+                        , onInput (WineDateEdited wine)
+                        , value wine.dateTasted
+                        ]
+                        []
+                    ]
+                ]
+            ]
         ]
 
 
@@ -183,3 +355,17 @@ viewWineEdited wine =
             ]
             []
         ]
+
+
+viewImagePreview : Maybe Image -> Html Msg
+viewImagePreview image =
+    case image of
+        Nothing ->
+            p [] [ text "add an image" ]
+
+        Just image ->
+            img
+                [ src image.contents
+                , title image.filename
+                ]
+                []
