@@ -4,7 +4,6 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Ports exposing (ImagePortData, fileSelected, fileContentRead)
-import WebSocket as WS
 import Json.Decode as JD
 
 
@@ -45,25 +44,11 @@ wineExample =
     , name = "James' sweet wine"
     , price = 15.0
     , variety = "Pinot Noir"
-    , appellation = "Bordeaux"
+    , appellation = "Burgandy"
     , winery = "James' Winery"
     , image = Nothing
     , comments = "Great!"
     , dateTasted = "1/1/2001"
-    }
-
-
-blankWine : Wine
-blankWine =
-    { id = 0
-    , name = "bloop!"
-    , price = 0
-    , variety = ""
-    , appellation = ""
-    , winery = ""
-    , image = Nothing
-    , comments = ""
-    , dateTasted = ""
     }
 
 
@@ -183,7 +168,7 @@ update msg model =
 
 createWineWithNewId : Model -> Wine
 createWineWithNewId model =
-    { blankWine | id = incrementWineId model }
+    { wineExample | id = incrementWineId model }
 
 
 incrementWineId : Model -> Int
@@ -243,7 +228,7 @@ viewWine wine =
                 ]
             , li []
                 [ label []
-                    [ text "wine: "
+                    [ text "price: "
                     , input
                         [ class "input"
                         , onInput (WinePriceEdited wine)
@@ -298,7 +283,7 @@ viewWine wine =
                 ]
             , li []
                 [ label []
-                    [ text "date: "
+                    [ text "tasted on: "
                     , input
                         [ class "input"
                         , onInput (WineDateEdited wine)
