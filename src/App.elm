@@ -182,7 +182,7 @@ incrementWineId model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "container" ]
+    div [ class "section has-pink-stripey-background" ]
         [ viewPageTitle
         , viewWines model
         ]
@@ -190,31 +190,42 @@ view model =
 
 viewPageTitle : Html Msg
 viewPageTitle =
-    div [ class "title h1" ] [ text "Welcome to Wine Club" ]
+    nav [ class "level" ]
+        [ div [ class "level-item has-text-centered" ]
+            [ p [ class "title has-text-primary", style [ ( "background-color", "white" ) ] ] [ text "Welcome to Wine Club" ]
+            ]
+        ]
 
 
 viewWines : Model -> Html Msg
 viewWines model =
-    div [] (List.map viewWine model.wines ++ [ button [ class "button is-small", onClick (WineAdded) ] [ text "add wine" ] ])
+    div [ class "container" ]
+        [ div [ class "columns" ]
+            [ div [ class "column" ]
+                [ button [ class "button is-small is-primary", onClick (WineAdded) ] [ text "add wine" ]
+                ]
+            ]
+        , div [ class "columns is-multiline" ] (List.map viewWine model.wines)
+        ]
 
 
 viewWine : Wine -> Html Msg
 viewWine wine =
-    div [ class "box" ]
-        [ ul [ class "wine" ]
-            [ li []
-                [ label []
-                    [ text "name: "
-                    , input
-                        [ class "input"
-                        , onInput (WineNameEdited wine)
-                        , value wine.name
+    div [ class "column is-one-third-desktop" ]
+        [ div [ class "box has-text-white" ]
+            [ ul [ class "wine" ]
+                [ li []
+                    [ label []
+                        [ text "name: "
+                        , input
+                            [ class "input"
+                            , onInput (WineNameEdited wine)
+                            , value wine.name
+                            ]
+                            []
                         ]
-                        []
                     ]
-                ]
-            , li []
-                [ figure [ class "image is-128x128" ]
+                , li []
                     [ div [ class "imageWrapper" ]
                         [ input
                             [ type_ "file"
@@ -225,71 +236,71 @@ viewWine wine =
                         , viewImagePreview wine.image
                         ]
                     ]
-                ]
-            , li []
-                [ label []
-                    [ text "price: "
-                    , input
-                        [ class "input"
-                        , onInput (WinePriceEdited wine)
-                        , value (toString wine.price)
+                , li []
+                    [ label []
+                        [ text "price: "
+                        , input
+                            [ class "input"
+                            , onInput (WinePriceEdited wine)
+                            , value (toString wine.price)
+                            ]
+                            []
                         ]
-                        []
                     ]
-                ]
-            , li []
-                [ label []
-                    [ text "variety: "
-                    , input
-                        [ class "input"
-                        , onInput (WineVarietyEdited wine)
-                        , value wine.variety
+                , li []
+                    [ label []
+                        [ text "variety: "
+                        , input
+                            [ class "input"
+                            , onInput (WineVarietyEdited wine)
+                            , value wine.variety
+                            ]
+                            []
                         ]
-                        []
                     ]
-                ]
-            , li []
-                [ label []
-                    [ text "appellation: "
-                    , input
-                        [ class "input"
-                        , onInput (WineAppellationEdited wine)
-                        , value wine.appellation
+                , li []
+                    [ label []
+                        [ text "appellation: "
+                        , input
+                            [ class "input"
+                            , onInput (WineAppellationEdited wine)
+                            , value wine.appellation
+                            ]
+                            []
                         ]
-                        []
                     ]
-                ]
-            , li []
-                [ label []
-                    [ text "winery: "
-                    , input
-                        [ class "input"
-                        , onInput (WineWineryEdited wine)
-                        , value wine.winery
+                , li []
+                    [ label []
+                        [ text "winery: "
+                        , input
+                            [ class "input"
+                            , onInput (WineWineryEdited wine)
+                            , value wine.winery
+                            ]
+                            []
                         ]
-                        []
                     ]
-                ]
-            , li []
-                [ label []
-                    [ text "comments: "
-                    , input
-                        [ class "input"
-                        , onInput (WineCommentsEdited wine)
-                        , value wine.comments
+                , li []
+                    [ label []
+                        [ text "comments: "
+                        , input
+                            [ class "input"
+                            , onInput (WineCommentsEdited wine)
+                            , value wine.comments
+                            ]
+                            []
                         ]
-                        []
                     ]
-                ]
-            , li []
-                [ label []
-                    [ text "tasted on: "
-                    , input
-                        [ class "input"
-                        , onInput (WineDateEdited wine)
-                        , value wine.dateTasted
+                , li []
+                    [ label []
+                        [ text "tasted on: "
+                        , input
+                            [ class "input"
+                            , onInput (WineDateEdited wine)
+                            , value wine.dateTasted
+                            ]
+                            []
                         ]
-                        []
                     ]
                 ]
             ]
@@ -349,8 +360,11 @@ viewImagePreview image =
             p [] [ text "add an image" ]
 
         Just image ->
-            img
-                [ src image.contents
-                , title image.filename
+            figure [ class "image is-128x128", style [ ( "display", "inline-block" ) ] ]
+                [ img
+                    [ src image.contents
+                    , title image.filename
+                    , style [ ( "display", "inline-block" ) ]
+                    ]
+                    []
                 ]
-                []

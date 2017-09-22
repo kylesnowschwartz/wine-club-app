@@ -2,6 +2,8 @@ default: js
 
 ELM_FILES = $(shell find src -type f -name '*.elm' -not -name '.\#*')
 
+all: elm.js wine-club-app.css
+wine-club-app.css: sass css/wine-club-app.sass css/wine-club-app.css
 js: elm.js
 
 elm.js: $(ELM_FILES)
@@ -22,7 +24,7 @@ realclean: clean clean-deps
 watch:
 	@make js || true
 	@echo "Watching for changes..."
-	@fswatch src/ | grep --line-buffered -v '.\#' | while read -r changed; do date; echo "MODIFIED: $$changed"; make js || true; done
+	@fswatch src/ css/wine-club-app.sass | grep --line-buffered -v '.\#' | while read -r changed; do date; echo "MODIFIED: $$changed"; make all || true; done
 
 .PHONY: js
 .PHONY: realclean

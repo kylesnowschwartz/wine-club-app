@@ -1,0 +1,27 @@
+// 1. Import the initial variables
+@import "../node_modules/bulma/sass/utilities/initial-variables"
+
+// 2. Set your own initial variables
+$flux-pink: #F04E98
+$flux-purple: #5F259F
+$pink-invert: #fff
+// Add a serif family
+$family-sans-serif: "Rubik", sans-serif
+
+// 3. Set the derived variables
+$primary: $flux-purple 
+$primary-invert: $flux-pink
+
+$box-background-color: $primary
+$body-background: $primary-invert
+
+// Use the existing orange as the danger color
+$danger: $orange
+// Use the new serif family
+$family-primary: $family-sans-serif
+
+.has-pink-stripey-background
+  background: repeating-linear-gradient(-27.5deg, transparent, transparent 8px, rgba(240, 78, 152, .5) 1px, rgba(240, 78, 152, .5) 10px)
+
+// 4. Import the rest of Bulma
+@import "../node_modules/bulma/bulma"
